@@ -8,6 +8,10 @@ import { EMPTY_GLYPH_DRAWING, EMPTY_GLYPH_HISTORY } from "./drawingTypes";
 
 export type DrawingAction =
   | {
+      type: "hydrate";
+      drawingsByCodePoint: Record<number, GlyphDrawing>;
+    }
+  | {
       type: "addStroke";
       codePoint: number;
       stroke: DrawingStroke;
@@ -78,6 +82,19 @@ export function drawingReducer(
   state: GlyphDrawingMap,
   action: DrawingAction
 ): GlyphDrawingMap {
+  if (action.type === "hydrate") {
+    return Object.fromEntries(
+      Object.entries(action.drawingsByCodePoint).map(([codePoint, drawing]) => [
+        codePoint,
+        {
+          drawing,
+          undoStack: [],
+          redoStack: []
+        }
+      ])
+    );
+  }
+
   const history = getGlyphHistory(state, action.codePoint);
 
   switch (action.type) {
@@ -163,4 +180,3 @@ export function drawingReducer(
       return state;
   }
 }
-

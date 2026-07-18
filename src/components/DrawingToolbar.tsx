@@ -9,26 +9,41 @@ type DrawingToolbarProps = {
   activeTool: DrawingTool;
   activeBrushSizeId: BrushSizeId;
   history: GlyphDrawingHistory;
+  isCompleted: boolean;
+  hasStrokes: boolean;
+  saveStatus: "idle" | "saving" | "saved" | "failed";
   onSelectTool: (tool: DrawingTool) => void;
   onSelectBrushSize: (brushSizeId: BrushSizeId) => void;
   onUndo: () => void;
   onRedo: () => void;
   onClear: () => void;
+  onToggleCompletion: () => void;
 };
 
 export function DrawingToolbar({
   activeTool,
   activeBrushSizeId,
   history,
+  isCompleted,
+  hasStrokes,
+  saveStatus,
   onSelectTool,
   onSelectBrushSize,
   onUndo,
   onRedo,
-  onClear
+  onClear,
+  onToggleCompletion
 }: DrawingToolbarProps) {
   const activeBrush = BRUSH_SIZES.find((size) => size.id === activeBrushSizeId);
   const toolLabel = activeTool === "pen" ? "펜" : "지우개";
-  const hasStrokes = history.drawing.strokes.length > 0;
+  const saveStatusLabel =
+    saveStatus === "saving"
+      ? "저장 중..."
+      : saveStatus === "saved"
+        ? "저장됨"
+        : saveStatus === "failed"
+          ? "저장 실패"
+          : "";
 
   return (
     <section className="drawing-toolbar" aria-label="그리기 도구">
@@ -72,6 +87,15 @@ export function DrawingToolbar({
       <div className="toolbar-row" role="group" aria-label="그리기 작업">
         <button
           type="button"
+          className="tool-button complete-button"
+          onClick={onToggleCompletion}
+          disabled={!hasStrokes}
+          aria-pressed={isCompleted}
+        >
+          {isCompleted ? "완료 취소" : "완료"}
+        </button>
+        <button
+          type="button"
           className="tool-button"
           onClick={onUndo}
           disabled={history.undoStack.length === 0}
@@ -97,9 +121,13 @@ export function DrawingToolbar({
       </div>
 
       <p className="session-notice">
-        현재 단계에서는 새로고침하면 그림이 사라집니다.
+        그림은 이 브라우저에 자동으로 저장됩니다.
       </p>
+      {saveStatusLabel ? (
+        <p className="save-status" aria-live="polite">
+          {saveStatusLabel}
+        </p>
+      ) : null}
     </section>
   );
 }
-
