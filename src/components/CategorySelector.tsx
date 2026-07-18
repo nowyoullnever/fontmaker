@@ -3,11 +3,13 @@ import { CHARACTER_CATEGORIES } from "../data/characterSet";
 
 type CategorySelectorProps = {
   activeCategoryId: CharacterCategoryId;
+  disabled?: boolean;
   onSelectCategory: (categoryId: CharacterCategoryId) => void;
 };
 
 export function CategorySelector({
   activeCategoryId,
+  disabled = false,
   onSelectCategory
 }: CategorySelectorProps) {
   return (
@@ -18,6 +20,7 @@ export function CategorySelector({
           type="button"
           className="category-button"
           aria-pressed={category.id === activeCategoryId}
+          disabled={disabled}
           onClick={() => onSelectCategory(category.id)}
         >
           {category.label}

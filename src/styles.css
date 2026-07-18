@@ -92,7 +92,8 @@ h1 {
 }
 
 .category-button,
-.navigation-button {
+.navigation-button,
+.tool-button {
   min-height: 44px;
   border: 1px solid #c8cdd3;
   border-radius: 8px;
@@ -116,6 +117,11 @@ h1 {
   color: #ffffff;
 }
 
+.category-button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
 .workspace {
   position: relative;
   width: min(100%, 560px);
@@ -126,6 +132,10 @@ h1 {
   overflow: hidden;
   border: 1px solid #9aa1aa;
   background: #fffdfa;
+}
+
+.drawing-workspace {
+  isolation: isolate;
 }
 
 .guide-line {
@@ -156,6 +166,67 @@ h1 {
   user-select: none;
 }
 
+.drawing-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: contain;
+}
+
+.guide-line,
+.workspace-character {
+  z-index: 1;
+}
+
+.drawing-toolbar {
+  display: grid;
+  gap: 10px;
+}
+
+.tool-status,
+.session-notice {
+  margin: 0;
+  color: #4f5965;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.tool-status {
+  font-weight: 800;
+}
+
+.session-notice {
+  color: #69727d;
+}
+
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tool-button {
+  min-width: 74px;
+  padding: 10px 12px;
+  font-size: 0.94rem;
+}
+
+.tool-button[aria-pressed="true"] {
+  border-color: #743f00;
+  background: #743f00;
+  color: #ffffff;
+}
+
+.danger-button {
+  border-color: #b9a5a0;
+}
+
 .character-navigation {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -168,7 +239,8 @@ h1 {
   font-size: 1rem;
 }
 
-.navigation-button:disabled {
+.navigation-button:disabled,
+.tool-button:disabled {
   border-color: #d7dadd;
   background: #eceef0;
   color: #8a929b;
@@ -176,7 +248,9 @@ h1 {
 }
 
 .category-button:focus-visible,
-.navigation-button:focus-visible {
+.navigation-button:focus-visible,
+.tool-button:focus-visible,
+.drawing-canvas:focus-visible {
   outline: 3px solid #e0a72f;
   outline-offset: 3px;
 }
@@ -215,6 +289,13 @@ h1 {
 
   .category-button {
     font-size: 0.78rem;
+  }
+
+  .tool-button {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
   }
 }
 
