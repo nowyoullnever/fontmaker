@@ -17,12 +17,41 @@ const { TTFReader, TTFWriter } = fonteditorCore as unknown as {
   };
 };
 
+export const HORIZONTAL_METRICS_ERROR =
+  "?고듃??湲??媛꾧꺽 ?뺣낫瑜?留뚮뱾吏 紐삵뻽?듬땲??";
+
 type FonteditorGlyph = {
   name: string;
   unicode: number[];
   advanceWidth: number;
   leftSideBearing: number;
+  xMin: number;
+  yMin: number;
+  xMax: number;
+  yMax: number;
   contours: Array<Array<{ x: number; y: number; onCurve: true }>>;
+};
+
+type ReadGlyph = {
+  unicode?: number[];
+  advanceWidth?: number;
+  leftSideBearing?: number;
+  xMin?: number;
+  yMin?: number;
+  xMax?: number;
+  yMax?: number;
+  contours?: unknown[];
+};
+
+type ReadTtfObject = {
+  head?: {
+    flags?: number;
+    xMin?: number;
+    yMin?: number;
+    xMax?: number;
+    yMax?: number;
+  };
+  glyf?: ReadGlyph[];
 };
 
 export function createPostScriptName(familyName: string): string {
@@ -44,13 +73,44 @@ function glyphToFonteditorGlyph(glyph: BuiltGlyph): FonteditorGlyph {
     unicode: glyph.unicode,
     advanceWidth: glyph.advanceWidth,
     leftSideBearing: glyph.leftSideBearing,
+    xMin: glyph.xMin,
+    yMin: glyph.yMin,
+    xMax: glyph.xMax,
+    yMax: glyph.yMax,
     contours: glyph.contours
   };
+}
+
+function calculateGlobalBounds(glyphs: BuiltGlyph[]): Pick<
+  BuiltGlyph,
+  "xMin" | "yMin" | "xMax" | "yMax"
+> {
+  const visibleGlyphs = glyphs.filter((glyph) => glyph.contours.length > 0);
+
+  if (visibleGlyphs.length === 0) {
+    return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+  }
+
+  return visibleGlyphs.reduce(
+    (bounds, glyph) => ({
+      xMin: Math.min(bounds.xMin, glyph.xMin),
+      yMin: Math.min(bounds.yMin, glyph.yMin),
+      xMax: Math.max(bounds.xMax, glyph.xMax),
+      yMax: Math.max(bounds.yMax, glyph.yMax)
+    }),
+    {
+      xMin: visibleGlyphs[0].xMin,
+      yMin: visibleGlyphs[0].yMin,
+      xMax: visibleGlyphs[0].xMax,
+      yMax: visibleGlyphs[0].yMax
+    }
+  );
 }
 
 export function createTtfObject(familyName: string, glyphs: BuiltGlyph[]) {
   const postScriptName = createPostScriptName(familyName);
   const visibleFamilyName = familyName.trim();
+  const globalBounds = calculateGlobalBounds(glyphs);
 
   return {
     version: 1,
@@ -59,14 +119,14 @@ export function createTtfObject(familyName: string, glyphs: BuiltGlyph[]) {
       fontRevision: 1,
       checkSumAdjustment: 0,
       magicNumber: 0x5f0f3cf5,
-      flags: 3,
+      flags: 1,
       unitsPerEm: FONT_METRICS.unitsPerEm,
       created: 0,
       modified: 0,
-      xMin: 0,
-      yMin: FONT_METRICS.descender,
-      xMax: FONT_METRICS.defaultAdvanceWidth,
-      yMax: FONT_METRICS.ascender,
+      xMin: globalBounds.xMin,
+      yMin: globalBounds.yMin,
+      xMax: globalBounds.xMax,
+      yMax: globalBounds.yMax,
       macStyle: 0,
       lowestRecPPEM: 8,
       fontDirectionHint: 2,
@@ -164,6 +224,75 @@ export function createTtfObject(familyName: string, glyphs: BuiltGlyph[]) {
   };
 }
 
+function isFiniteMetric(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function validateGeneratedHorizontalMetrics(
+  read: ReadTtfObject,
+  expectedGlyphs: BuiltGlyph[]
+): void {
+  const readGlyphs = read.glyf;
+
+  if (!Array.isArray(readGlyphs) || readGlyphs.length < expectedGlyphs.length) {
+    throw new Error(HORIZONTAL_METRICS_ERROR);
+  }
+
+  const readByUnicode = new Map<number, ReadGlyph>();
+
+  for (const glyph of readGlyphs) {
+    for (const unicode of glyph.unicode ?? []) {
+      readByUnicode.set(unicode, glyph);
+    }
+
+    if (!isFiniteMetric(glyph.leftSideBearing)) {
+      throw new Error(HORIZONTAL_METRICS_ERROR);
+    }
+
+    if ((glyph.contours?.length ?? 0) > 0) {
+      if (
+        !isFiniteMetric(glyph.xMin) ||
+        !isFiniteMetric(glyph.yMin) ||
+        !isFiniteMetric(glyph.xMax) ||
+        !isFiniteMetric(glyph.yMax) ||
+        glyph.xMin > glyph.xMax ||
+        glyph.yMin > glyph.yMax
+      ) {
+        throw new Error(HORIZONTAL_METRICS_ERROR);
+      }
+    }
+  }
+
+  const notdefGlyph = readGlyphs[0];
+  const spaceGlyph = readByUnicode.get(32);
+
+  if (
+    notdefGlyph.advanceWidth !== FONT_METRICS.defaultAdvanceWidth ||
+    spaceGlyph?.advanceWidth !== FONT_METRICS.spaceAdvanceWidth
+  ) {
+    throw new Error(HORIZONTAL_METRICS_ERROR);
+  }
+
+  for (const expectedGlyph of expectedGlyphs) {
+    for (const unicode of expectedGlyph.unicode) {
+      const readGlyph = readByUnicode.get(unicode);
+
+      if (!readGlyph) {
+        throw new Error(HORIZONTAL_METRICS_ERROR);
+      }
+
+      if (
+        unicode !== 32 &&
+        (!isFiniteMetric(readGlyph.advanceWidth) ||
+          readGlyph.advanceWidth !== FONT_METRICS.defaultAdvanceWidth ||
+          readGlyph.advanceWidth <= 0)
+      ) {
+        throw new Error(HORIZONTAL_METRICS_ERROR);
+      }
+    }
+  }
+}
+
 export function buildTrueTypeFont(input: FontBuildInput): FontBuildResult {
   validateFontName(input.familyName);
   const glyphs = buildExportGlyphs(input.glyphs);
@@ -175,6 +304,11 @@ export function buildTrueTypeFont(input: FontBuildInput): FontBuildResult {
   if (!(arrayBuffer instanceof ArrayBuffer) || arrayBuffer.byteLength === 0) {
     throw new Error("TTF 파일을 만들지 못했습니다.");
   }
+
+  validateGeneratedHorizontalMetrics(
+    readGeneratedFont(arrayBuffer) as ReadTtfObject,
+    glyphs
+  );
 
   return {
     arrayBuffer,

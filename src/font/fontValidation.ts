@@ -28,6 +28,18 @@ export function validateBuiltGlyphs(glyphs: BuiltGlyph[]): void {
       throw new Error("invalid advance width");
     }
 
+    if (
+      !Number.isFinite(glyph.leftSideBearing) ||
+      !Number.isFinite(glyph.xMin) ||
+      !Number.isFinite(glyph.yMin) ||
+      !Number.isFinite(glyph.xMax) ||
+      !Number.isFinite(glyph.yMax) ||
+      glyph.xMin > glyph.xMax ||
+      glyph.yMin > glyph.yMax
+    ) {
+      throw new Error("invalid glyph bounds");
+    }
+
     if (glyphNames.has(glyph.name)) {
       throw new Error("duplicate glyph name");
     }
@@ -57,4 +69,3 @@ export function validateBuiltGlyphs(glyphs: BuiltGlyph[]): void {
     }
   }
 }
-

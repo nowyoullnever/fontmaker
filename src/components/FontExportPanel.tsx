@@ -2,7 +2,10 @@ import { useMemo, useState } from "react";
 import { getGlyphDrawing } from "../drawing/drawingReducer";
 import type { GlyphDrawingMap } from "../drawing/drawingTypes";
 import { FONT_CHARACTERS } from "../data/characterSet";
-import { buildTrueTypeFont } from "../font/fontBuilder";
+import {
+  buildTrueTypeFont,
+  HORIZONTAL_METRICS_ERROR
+} from "../font/fontBuilder";
 import { downloadTtf } from "../font/downloadFont";
 import type { ExportableGlyphRecord } from "../font/fontTypes";
 import { drawingHasValidDrawablePoints } from "../font/glyphBuilder";
@@ -75,6 +78,9 @@ export function FontExportPanel({
     } catch (error) {
       console.error(error);
       setStatus("폰트를 만들지 못했습니다.");
+      if (error instanceof Error && error.message === HORIZONTAL_METRICS_ERROR) {
+        setStatus(error.message);
+      }
     } finally {
       setIsExporting(false);
     }
@@ -113,4 +119,3 @@ export function FontExportPanel({
     </section>
   );
 }
-

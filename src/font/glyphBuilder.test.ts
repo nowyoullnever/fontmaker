@@ -4,6 +4,7 @@ import type { ExportableGlyphRecord } from "./fontTypes";
 import {
   buildExportGlyphs,
   buildUserGlyph,
+  calculateContourBounds,
   codePointToGlyphName,
   createNotdefGlyph,
   createSpaceGlyph
@@ -59,7 +60,28 @@ describe("glyph builder", () => {
     expect(createSpaceGlyph()).toMatchObject({
       unicode: [32],
       advanceWidth: 500,
+      xMin: 0,
+      yMin: 0,
+      xMax: 0,
+      yMax: 0,
       contours: []
+    });
+  });
+
+  it("calculates glyph bounds from finite contour points", () => {
+    const glyph = buildUserGlyph({
+      codePoint: 65,
+      completed: true,
+      drawing: validDrawing
+    });
+
+    expect(glyph).not.toBeNull();
+    expect(glyph).toMatchObject(calculateContourBounds(glyph?.contours ?? []));
+    expect(calculateContourBounds([])).toEqual({
+      xMin: 0,
+      yMin: 0,
+      xMax: 0,
+      yMax: 0
     });
   });
 
@@ -86,4 +108,3 @@ describe("glyph builder", () => {
     expect(FONT_CHARACTERS).toHaveLength(2444);
   });
 });
-

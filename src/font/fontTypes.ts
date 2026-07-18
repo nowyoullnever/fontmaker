@@ -32,6 +32,10 @@ export type BuiltGlyph = {
   unicode: number[];
   advanceWidth: number;
   leftSideBearing: number;
+  xMin: number;
+  yMin: number;
+  xMax: number;
+  yMax: number;
   contours: FontContour[];
 };
 
@@ -46,4 +50,3 @@ export type FontBuildResult = {
   glyphCount: number;
   exportedCodePoints: number[];
 };
-
