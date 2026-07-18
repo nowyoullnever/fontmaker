@@ -400,6 +400,16 @@ export function App() {
         return;
       }
 
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === "z" &&
+        !event.shiftKey
+      ) {
+        event.preventDefault();
+        undo();
+        return;
+      }
+
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         movePrevious();
@@ -413,7 +423,7 @@ export function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canNavigate, currentIndex]);
+  }, [canNavigate, currentCodePoint, currentHistory, isCurrentCompleted, currentIndex]);
 
   if (isLoading) {
     return (
