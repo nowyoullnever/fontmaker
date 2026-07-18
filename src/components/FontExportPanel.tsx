@@ -41,10 +41,6 @@ export function FontExportPanel({
   const [fontName, setFontName] = useState("내 손글씨");
   const [isExporting, setIsExporting] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [progress, setProgress] = useState<{
-    current: number;
-    total: number;
-  } | null>(null);
   const exportableRecords = useMemo(
     () => getExportableGlyphRecords(drawingState, completedCodePoints),
     [drawingState, completedCodePoints]
@@ -57,7 +53,7 @@ export function FontExportPanel({
   const canExport =
     !disabled && !isExporting && !isFontNameEmpty && validCompletedCount > 0;
 
-  const exportFont = async () => {
+  const exportFont = () => {
     if (!canExport) {
       setStatus(
         isFontNameEmpty
@@ -70,13 +66,10 @@ export function FontExportPanel({
     try {
       setIsExporting(true);
       setStatus("폰트를 만드는 중...");
-      setProgress({ current: 0, total: validCompletedCount });
-      await new Promise((resolve) => window.setTimeout(resolve, 0));
       const result = buildTrueTypeFont({
         familyName: fontName,
         glyphs: exportableRecords
       });
-      setProgress({ current: validCompletedCount, total: validCompletedCount });
       downloadTtf(result.arrayBuffer, result.filename);
       setStatus("폰트를 만들었습니다.");
     } catch (error) {
@@ -115,9 +108,6 @@ export function FontExportPanel({
       {status ? (
         <p className="export-status" aria-live="polite">
           {status}
-          {progress && isExporting
-            ? ` ${progress.current} / ${progress.total}`
-            : ""}
         </p>
       ) : null}
     </section>

@@ -62,6 +62,25 @@ describe("font builder", () => {
     expect(unicodes).toContain(65);
   });
 
+  it("writes a mixed Latin, punctuation, and Korean TTF", () => {
+    const result = buildTrueTypeFont({
+      familyName: "MixedFont",
+      glyphs: [65, 97, 48, 63, 0xac00].map((codePoint) => ({
+        codePoint,
+        completed: true,
+        drawing
+      }))
+    });
+    const read = readGeneratedFont(result.arrayBuffer) as {
+      glyf: Array<{ unicode?: number[] }>;
+    };
+    const unicodes = read.glyf.flatMap((glyph) => glyph.unicode ?? []);
+
+    expect(result.arrayBuffer.byteLength).toBeGreaterThan(1000);
+    expect(result.glyphCount).toBe(7);
+    expect(unicodes).toEqual(expect.arrayContaining([32, 48, 63, 65, 97, 0xac00]));
+  });
+
   it("keeps existing Phase 3 backups valid", () => {
     const backup = createBackup(
       [
@@ -78,4 +97,3 @@ describe("font builder", () => {
     expect(validateBackup(backup).glyphs).toHaveLength(1);
   });
 });
-

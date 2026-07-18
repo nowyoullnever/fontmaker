@@ -1,3 +1,4 @@
+import { downloadBlobFile } from "../download/downloadBlob";
 import { getGlyphDrawing } from "../drawing/drawingReducer";
 import type { GlyphDrawingMap } from "../drawing/drawingTypes";
 import {
@@ -67,14 +68,11 @@ export function DataManagementPanel({
       const blob = new Blob([JSON.stringify(backup, null, 2)], {
         type: "application/json"
       });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = buildBackupFilename();
-      link.click();
-      URL.revokeObjectURL(url);
+
+      downloadBlobFile({ blob, filename: buildBackupFilename() });
       onMessage("백업 파일을 만들었습니다.");
-    } catch {
+    } catch (error) {
+      console.error(error);
       onError("백업 파일을 만들지 못했습니다.");
     }
   };
