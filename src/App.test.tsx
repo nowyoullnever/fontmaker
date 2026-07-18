@@ -33,6 +33,53 @@ function getNavigationButtons(container: HTMLElement) {
   );
 }
 
+function drawStroke(container: HTMLElement) {
+  const canvas = container.querySelector("canvas") as HTMLCanvasElement;
+  vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+    bottom: 300,
+    height: 300,
+    left: 0,
+    right: 300,
+    top: 0,
+    width: 300,
+    x: 0,
+    y: 0,
+    toJSON: () => ({})
+  });
+
+  fireEvent.pointerDown(canvas, {
+    clientX: 30,
+    clientY: 30,
+    pointerId: 1,
+    pointerType: "mouse",
+    pressure: 0
+  });
+  fireEvent.pointerMove(canvas, {
+    clientX: 150,
+    clientY: 150,
+    pointerId: 1,
+    pointerType: "mouse",
+    pressure: 0
+  });
+  fireEvent.pointerUp(canvas, {
+    clientX: 150,
+    clientY: 150,
+    pointerId: 1,
+    pointerType: "mouse",
+    pressure: 0
+  });
+}
+
+function getCompleteButton(container: HTMLElement) {
+  return container.querySelector(".complete-button") as HTMLButtonElement;
+}
+
+function getClearGlyphButton(container: HTMLElement) {
+  return container.querySelector(
+    ".drawing-toolbar .danger-button"
+  ) as HTMLButtonElement;
+}
+
 describe("App", () => {
   beforeEach(async () => {
     await resetFakeDatabase();
@@ -86,46 +133,44 @@ describe("App", () => {
     expect(nextButton).toBeDisabled();
   });
 
+  it("automatically completes a drawn character when moving next", async () => {
+    const user = userEvent.setup();
+    const { container } = await renderLoadedApp();
+    const [previousButton, nextButton] = getNavigationButtons(container);
+
+    drawStroke(container);
+    await waitFor(() => expect(getCompleteButton(container)).not.toBeDisabled());
+
+    await user.click(nextButton);
+    await user.click(previousButton);
+
+    expect(getCompleteButton(container)).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("clears every drawn font and completion state from data management", async () => {
+    const user = userEvent.setup();
+    const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { container } = await renderLoadedApp();
+    const [previousButton, nextButton] = getNavigationButtons(container);
+
+    drawStroke(container);
+    await waitFor(() => expect(getClearGlyphButton(container)).not.toBeDisabled());
+    await user.click(nextButton);
+    (container.querySelector(".data-management") as HTMLDetailsElement).open = true;
+    await user.click(screen.getByRole("button", { name: "그린 폰트 모두 지우기" }));
+    await user.click(previousButton);
+
+    await waitFor(() => expect(getClearGlyphButton(container)).toBeDisabled());
+    expect(getCompleteButton(container)).toHaveAttribute("aria-pressed", "false");
+    expect(confirmMock).toHaveBeenCalled();
+    confirmMock.mockRestore();
+  });
+
   it("undoes the current character drawing with Ctrl+Z", async () => {
     const { container } = await renderLoadedApp();
-    const canvas = container.querySelector("canvas") as HTMLCanvasElement;
-    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
-      bottom: 300,
-      height: 300,
-      left: 0,
-      right: 300,
-      top: 0,
-      width: 300,
-      x: 0,
-      y: 0,
-      toJSON: () => ({})
-    });
+    drawStroke(container);
 
-    fireEvent.pointerDown(canvas, {
-      clientX: 30,
-      clientY: 30,
-      pointerId: 1,
-      pointerType: "mouse",
-      pressure: 0
-    });
-    fireEvent.pointerMove(canvas, {
-      clientX: 150,
-      clientY: 150,
-      pointerId: 1,
-      pointerType: "mouse",
-      pressure: 0
-    });
-    fireEvent.pointerUp(canvas, {
-      clientX: 150,
-      clientY: 150,
-      pointerId: 1,
-      pointerType: "mouse",
-      pressure: 0
-    });
-
-    const clearButton = container.querySelector(
-      ".danger-button"
-    ) as HTMLButtonElement;
+    const clearButton = getClearGlyphButton(container);
     await waitFor(() => expect(clearButton).not.toBeDisabled());
 
     fireEvent.keyDown(window, { key: "z", ctrlKey: true });
@@ -133,4 +178,3 @@ describe("App", () => {
     await waitFor(() => expect(clearButton).toBeDisabled());
   });
 });
-

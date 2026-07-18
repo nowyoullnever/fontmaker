@@ -24,6 +24,7 @@ describe("DataManagementPanel", () => {
         onMessage={vi.fn()}
         onError={vi.fn()}
         onReplaceWorkspace={vi.fn()}
+        onClearAllWork={vi.fn()}
       />
     );
 

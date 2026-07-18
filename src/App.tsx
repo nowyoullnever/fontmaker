@@ -130,6 +130,8 @@ export function App() {
   );
 
   const canNavigate = !isGestureActive && !isLoading;
+  const canCompleteCurrentOnNavigate =
+    currentDrawing.strokes.length > 0 && !isCurrentCompleted;
   const canGoPrevious = currentIndex > 0 && canNavigate;
   const canGoNext = currentIndex < FONT_CHARACTERS.length - 1 && canNavigate;
 
@@ -255,7 +257,21 @@ export function App() {
     moveToIndex(getPreviousCharacterIndex(currentIndex));
   };
 
+  const completeCurrentGlyphIfDrawable = () => {
+    if (currentDrawing.strokes.length === 0 || isCurrentCompleted) {
+      return;
+    }
+
+    setCompletedCodePoints((current) => {
+      const next = new Set(current);
+      next.add(currentCodePoint);
+      return next;
+    });
+    persistGlyph(currentCodePoint, currentDrawing, true);
+  };
+
   const moveNext = () => {
+    completeCurrentGlyphIfDrawable();
     moveToIndex(getNextCharacterIndex(currentIndex, FONT_CHARACTERS.length));
   };
 
@@ -264,6 +280,8 @@ export function App() {
   };
 
   const moveNextIncomplete = () => {
+    completeCurrentGlyphIfDrawable();
+
     if (nextIncompleteIndex === null) {
       setMessage("다음 미완성 글자가 없습니다.");
       return;
@@ -394,6 +412,21 @@ export function App() {
     setCurrentIndex(findGlobalIndexByCodePoint(lastCodePoint));
   };
 
+  const clearAllDrawnFonts = async () => {
+    if (!window.confirm("그린 폰트와 완료 표시를 모두 지울까요?")) {
+      return;
+    }
+
+    try {
+      await replaceWorkspace([], currentCodePoint);
+      setStorageError(null);
+      setMessage("그린 폰트를 모두 지웠습니다.");
+    } catch (error) {
+      console.error(error);
+      setStorageError("그린 폰트를 모두 지우지 못했습니다.");
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isEditableElement(event.target) || !canNavigate) {
@@ -480,7 +513,10 @@ export function App() {
           type="button"
           className="secondary-button"
           onClick={moveNextIncomplete}
-          disabled={nextIncompleteIndex === null || !canNavigate}
+          disabled={
+            (nextIncompleteIndex === null && !canCompleteCurrentOnNavigate) ||
+            !canNavigate
+          }
         >
           다음 미완성
         </button>
@@ -526,6 +562,7 @@ export function App() {
         onMessage={setMessage}
         onError={setStorageError}
         onReplaceWorkspace={replaceWorkspace}
+        onClearAllWork={clearAllDrawnFonts}
       />
 
       <FontExportPanel

@@ -19,6 +19,7 @@ type DataManagementPanelProps = {
     records: StoredGlyphRecord[],
     lastCodePoint: number
   ) => Promise<void>;
+  onClearAllWork: () => void | Promise<void>;
 };
 
 function buildRecordsFromMemory(
@@ -52,7 +53,8 @@ export function DataManagementPanel({
   completedCodePoints,
   onMessage,
   onError,
-  onReplaceWorkspace
+  onReplaceWorkspace,
+  onClearAllWork
 }: DataManagementPanelProps) {
   const exportBackup = async () => {
     try {
@@ -119,8 +121,14 @@ export function DataManagementPanel({
             }}
           />
         </label>
+        <button
+          type="button"
+          className="secondary-button danger-button"
+          onClick={() => void onClearAllWork()}
+        >
+          그린 폰트 모두 지우기
+        </button>
       </div>
     </details>
   );
 }
-
