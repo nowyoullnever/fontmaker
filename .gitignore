@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+
+# Logs
+*.log
+
+# Local environment
+.env
+.env.*
+
+# Codex workspace scratch folders
+work/
+outputs/
+
