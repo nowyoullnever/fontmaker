@@ -6,6 +6,7 @@ import { vi } from "vitest";
   return {
     arc: vi.fn(),
     beginPath: vi.fn(),
+    closePath: vi.fn(),
     clearRect: vi.fn(),
     fill: vi.fn(),
     lineTo: vi.fn(),

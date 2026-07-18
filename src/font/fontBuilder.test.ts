@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { hasSelfIntersection } from "../drawing/strokeGeometry";
 import { createBackup } from "../storage/backup";
 import { validateBackup } from "../storage/backup";
 import { buildExportGlyphs } from "./glyphBuilder";
 import { FONT_METRICS, type BuiltGlyph } from "./fontTypes";
+import { signedContourArea } from "./contourUtils";
 import {
   buildTrueTypeFont,
   createDownloadFilename,
@@ -146,6 +148,7 @@ describe("font builder", () => {
     for (const codePoint of expectedCodePoints) {
       const glyph = glyphByUnicode(read, codePoint);
       const bounds = contourBounds(glyph);
+      const firstContour = glyph.contours?.[0] ?? [];
 
       expect(glyph.advanceWidth).toBe(1000);
       expect(glyph.advanceWidth).not.toBe(0);
@@ -158,6 +161,21 @@ describe("font builder", () => {
       expect(read.head.yMin).toBeLessThanOrEqual(glyph.yMin ?? Infinity);
       expect(read.head.xMax).toBeGreaterThanOrEqual(glyph.xMax ?? -Infinity);
       expect(read.head.yMax).toBeGreaterThanOrEqual(glyph.yMax ?? -Infinity);
+      expect(
+        Math.abs(
+          signedContourArea(
+            firstContour.map((point) => ({ ...point, onCurve: true as const }))
+          )
+        )
+      ).toBeGreaterThan(0);
+      expect(
+        hasSelfIntersection(
+          firstContour.map((point) => ({
+            x: (point.x - 50) / 900,
+            y: (800 - point.y) / 900
+          }))
+        )
+      ).toBe(false);
     }
   });
 

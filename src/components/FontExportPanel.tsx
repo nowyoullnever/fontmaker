@@ -8,6 +8,7 @@ import {
 } from "../font/fontBuilder";
 import { downloadTtf } from "../font/downloadFont";
 import type { ExportableGlyphRecord } from "../font/fontTypes";
+import { STROKE_OUTLINE_ERROR } from "../drawing/strokeGeometry";
 import { drawingHasValidDrawablePoints } from "../font/glyphBuilder";
 
 type FontExportPanelProps = {
@@ -78,7 +79,11 @@ export function FontExportPanel({
     } catch (error) {
       console.error(error);
       setStatus("폰트를 만들지 못했습니다.");
-      if (error instanceof Error && error.message === HORIZONTAL_METRICS_ERROR) {
+      if (
+        error instanceof Error &&
+        (error.message === HORIZONTAL_METRICS_ERROR ||
+          error.message === STROKE_OUTLINE_ERROR)
+      ) {
         setStatus(error.message);
       }
     } finally {
