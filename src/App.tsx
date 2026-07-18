@@ -5,6 +5,7 @@ import { CharacterNavigation } from "./components/CharacterNavigation";
 import { DataManagementPanel } from "./components/DataManagementPanel";
 import { DrawingToolbar } from "./components/DrawingToolbar";
 import { DrawingWorkspace } from "./components/DrawingWorkspace";
+import { FontExportPanel } from "./components/FontExportPanel";
 import {
   FONT_CHARACTERS,
   getCategoryPosition,
@@ -517,6 +518,12 @@ export function App() {
         onReplaceWorkspace={replaceWorkspace}
       />
 
+      <FontExportPanel
+        drawingState={drawingState}
+        completedCodePoints={completedCodePoints}
+        disabled={isLoading || isGestureActive}
+      />
+
       {isCharacterListOpen ? (
         <CharacterListDialog
           activeCodePoint={currentCodePoint}
@@ -535,4 +542,3 @@ export function App() {
     </main>
   );
 }
-

@@ -534,6 +534,49 @@ h1 {
   outline-offset: 3px;
 }
 
+.font-export-panel {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #d7dadd;
+  padding-top: 14px;
+}
+
+.font-export-panel h2 {
+  margin: 0;
+  color: #15171a;
+  font-size: 1.18rem;
+  line-height: 1.25;
+}
+
+.font-name-field {
+  display: grid;
+  gap: 6px;
+  color: #2e333a;
+  font-weight: 800;
+}
+
+.font-name-field input {
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid #c8cdd3;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #1d1f23;
+  font: inherit;
+}
+
+.export-summary,
+.export-status {
+  margin: 0;
+  color: #4f5965;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.export-status {
+  font-weight: 800;
+}
+
 @media (max-width: 360px) {
   .quick-actions {
     gap: 8px;
