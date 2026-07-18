@@ -1,4 +1,2 @@
-# fontmaker
-
-Initial repository for fontmaker.
+web based font maker - for korean language
 
